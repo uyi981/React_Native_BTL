@@ -4,7 +4,9 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import React, { useState } from 'react';
-
+import ProfileScreen from './screen/ProfileScreen'
+import EditProfileScreen from './screen/EditProfileScreen';
+import { createStackNavigator } from '@react-navigation/stack';
 
 const commentsData = [
   { id: '1', user: 'martini_rod', comment: 'How neatly I write the date in my book', time: '22h', likes: 8098 },
@@ -186,10 +188,16 @@ function InboxScreen() {
 }
 
 function MeScreen() {
+  const Stack = createStackNavigator();
+
   return (
-    <View style={styles.centeredContainer}>
-      <Text>Me</Text>
-    </View>
+    // <View style={styles.centeredContainer}>
+    //   <Text>Me</Text>
+    // </View>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Profile" component={ProfileScreen} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+    </Stack.Navigator>
   );
 }
 
