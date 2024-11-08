@@ -1,5 +1,5 @@
 //VoPhuocHau-21089291
-import { View, Text, Image, StyleSheet, TouchableOpacity,Modal,FlatList,TextInput} from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity,Modal,FlatList,TextInput,Button} from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -7,7 +7,9 @@ import React, { useState } from 'react';
 import ProfileScreen from './screen/ProfileScreen'
 import EditProfileScreen from './screen/EditProfileScreen';
 import { createStackNavigator } from '@react-navigation/stack';
+import * as DocumentPicker from 'expo-document-picker';
 import { Video } from 'expo-av';
+import AddScreen from './screen/AddScreen';
 const commentsData = [
   { id: '1', user: 'martini_rod', comment: 'How neatly I write the date in my book', time: '22h', likes: 8098 },
   { id: '2', user: 'maxjacobson', comment: 'Now that’s a skill very talented', time: '23h', likes: 5028 },
@@ -107,14 +109,6 @@ function DiscoverScreen() {
   return (
     <View style={styles.centeredContainer}>
       <Text>Discover</Text>
-    </View>
-  );
-}
-
-function AddScreen() {
-  return (
-    <View style={styles.centeredContainer}>
-      <Text>Add New</Text>
     </View>
   );
 }
