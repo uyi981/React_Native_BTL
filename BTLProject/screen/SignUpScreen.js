@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, CheckBox, StyleSheet, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import {auth, db} from "../firebaseConfig";
+import {setDoc, doc} from "firebase/firestore";
+
+
+
 
 const SignUpScreen = () => {
   const [name, setName] = useState('');
@@ -7,8 +14,9 @@ const SignUpScreen = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const navigation = useNavigation(); // Sử dụng hook để lấy đối tượng navigation
 
-  const handleSignUp = () => {
+  const handleSignUp = async (e) => {
     if (!name || !email || !password || !confirmPassword) {
       Alert.alert("Vui lòng điền đầy đủ thông tin.");
       return;
@@ -22,6 +30,26 @@ const SignUpScreen = () => {
       return;
     }
 
+    e.preventDefault();
+    try {
+      
+      await createUserWithEmailAndPassword(auth, email, password);
+      const user = auth.currentUser;
+      console.log(user);
+      if (user){
+        await setDoc (doc(db, "users", user.uid) , {
+          name: name,
+          email: email,
+          password: password,
+        });
+      }
+      console.log("Đăng ký thành công");
+    } catch (error) {
+      console.error(error.message);
+      
+    }
+
+
     // Logic đăng ký sẽ được thêm vào đây
     Alert.alert('Đăng ký thành công');
   };
@@ -29,7 +57,7 @@ const SignUpScreen = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Đăng Ký</Text>
-
+      
       <TextInput
         style={styles.input}
         placeholder="Nhập tên"
@@ -75,7 +103,7 @@ const SignUpScreen = () => {
         <Text style={styles.signUpButtonText}>Đăng ký</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.loginRedirect} onPress={() => Alert.alert('Chuyển tới màn hình đăng nhập')}>
+      <TouchableOpacity style={styles.loginRedirect} onPress={() => navigation.navigate('Login')}>
         <Text style={styles.loginRedirectText}>Đã có tài khoản? Đăng nhập ngay</Text>
       </TouchableOpacity>
     </View>

@@ -1,18 +1,35 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, CheckBox, StyleSheet, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import {auth} from "../firebaseConfig";
+
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const navigation = useNavigation(); // Sử dụng hook để lấy đối tượng navigation
 
-  const handleLogin = () => {
+  const handleLogin = async(e) => {
     if (!email || !password) {
       Alert.alert("Vui lòng nhập email và mật khẩu.");
     } else {
       // Logic đăng nhập sẽ được thêm vào đây
       Alert.alert('Đăng nhập thành công');
     }
+
+    e.preventDefault();
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      console.log("Đăng nhập thành công");
+      
+    } catch (error) {
+      console.error(error.message);
+      
+    }
+
   };
 
   return (
@@ -50,6 +67,9 @@ const LoginScreen = () => {
 
       <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
         <Text style={styles.loginButtonText}>Đăng nhập</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.loginRedirect} onPress={() => navigation.navigate('SignUp')}>
+        <Text style={styles.loginRedirectText}>Chưa có tài khoản? Đăng ký ngay</Text>
       </TouchableOpacity>
     </View>
   );
@@ -108,6 +128,10 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  loginRedirectText: {
+    color: '#1E90FF',
+    fontSize: 14,
   },
 });
 
