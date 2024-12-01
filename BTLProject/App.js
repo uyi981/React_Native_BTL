@@ -1,109 +1,23 @@
 //VoPhuocHau-21089291
-import { View, Text, Image, StyleSheet, TouchableOpacity,Modal,FlatList,TextInput,Button} from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity,Modal,FlatList,TextInput,Button,ScrollView} from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import ProfileScreen from './screen/ProfileScreen'
 import EditProfileScreen from './screen/EditProfileScreen';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as DocumentPicker from 'expo-document-picker';
 import { Video } from 'expo-av';
-import AddScreen from './screen/AddScreen';
+import AddScreen from './screen/AddScreen'; 
+import HomeScreen from './HomeScreen';
+import axios from 'axios';
 const commentsData = [
   { id: '1', user: 'martini_rod', comment: 'How neatly I write the date in my book', time: '22h', likes: 8098 },
   { id: '2', user: 'maxjacobson', comment: 'Now that’s a skill very talented', time: '23h', likes: 5028 },
   { id: '3', user: 'zackjohn', comment: 'Doing this would make me so anxious', time: '22h', likes: 5098 },
   // Add more comments as needed
 ];
-
-function HomeScreen() {
-  const [modalVisible, setModalVisible] = useState(false);
-  const renderComment = ({ item }) => (
-    <View style={styles.commentContainer}>
-      <View style={styles.commentContent}>
-        <Text style={styles.username}>{item.user}</Text>
-        <Text style={styles.commentText}>{item.comment}</Text>
-        <Text style={styles.time}>{item.time}</Text>
-      </View>
-      <View style={styles.likeContainer}>
-        <Icon name="heart" size={20} color="gray" />
-        <Text style={styles.likes}>{item.likes}</Text>
-      </View>
-    </View>
-  );
-
-  return (
-    <View style={styles.container}>
-      {/* Video Placeholder */}
-      <Video
-        source={require('./video/video1.mp4')}
-        style={styles.backgroundVideo}
-        shouldPlay={true} // Tự động phát
-        isLooping={true} // Lặp lại video
-        resizeMode="contain" // Điều chỉnh kích thước video
-        useNativeControls={true} // Hiển thị các điều khiển video (play, pause, v.v.)
-      />
-       <Modal
-        visible={modalVisible}
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-        transparent={true}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.commentCount}>579 comments</Text>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Icon name="times" size={24} color="white" />
-            </TouchableOpacity>
-          </View>
-          
-          <FlatList
-            data={commentsData}
-            renderItem={renderComment}
-            keyExtractor={(item) => item.id}
-            style={styles.commentList}
-          />
-
-          {/* Input bar for new comment */}
-          <View style={styles.inputContainer}>
-            <TextInput
-              placeholder="Add comment..."
-              placeholderTextColor="#888"
-              style={styles.input}
-            />
-            <TouchableOpacity>
-              <Icon name="smile-o" size={24} color="#333" style={styles.inputIcon} />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <Icon name="send" size={24} color="#333" style={styles.inputIcon} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-      {/* Icon buttons on the right */}
-      <View style={styles.rightIconsContainer}>
-        <TouchableOpacity style={styles.iconButton}>
-          <Icon name="heart" size={30} color="white" />
-          <Text style={styles.iconText}>1445</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton} onPress={() => setModalVisible(true)}>
-          <Icon name="comment" size={30} color="white" />
-          <Text style={styles.iconText}>04</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton}>
-          <Icon name="share" size={30} color="white" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Bottom description bar */}
-      <View style={styles.bottomDescription}>
-        <Text style={styles.descriptionText}>@Name • 1:28</Text>
-        <Text style={styles.hashtag}>#travel #nature</Text>
-      </View>
-    </View>
-  );
-}
 
 function DiscoverScreen() {
   return (
@@ -201,9 +115,9 @@ export default function App() {
 
 const styles = StyleSheet.create({
   backgroundVideo: {
-    width: '100%',  // Kích thước của video
-    height: '100%',  // Kích thước của video
-    position: 'absolute',  // Đảm bảo video không bị chồng lên các thành phần khác
+    width: '10%',  // Kích thước của video
+    height: '10%',  // Kích thước của video
+   // position: 'absolute',  // Đảm bảo video không bị chồng lên các thành phần khác
     top: 0,  // Đặt vị trí video nếu cần
     left: 0,  // Đặt vị trí video nếu cần
   },
@@ -211,10 +125,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'black',
   },
+  container1: {
+    flex: 1,
+    backgroundColor: 'black',
+    height:500,width:'100%'
+  },
   video: {
     width: '100%',
     height: '75%',
-    resizeMode: 'cover',
+    //resizeMode: 'cover',
   },
   rightIconsContainer: {
     position: 'absolute',
