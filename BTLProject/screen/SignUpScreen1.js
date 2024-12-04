@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, CheckBox, StyleSheet, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { createUserWithEmailAndPassword , updateProfile } from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import {auth, db} from "../firebaseConfig";
 import {setDoc, doc} from "firebase/firestore";
 
@@ -13,12 +13,10 @@ const SignUpScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [photoURL, setPhotoURL] = useState('');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const navigation = useNavigation(); // Sử dụng hook để lấy đối tượng navigation
 
   const handleSignUp = async (e) => {
-    const defaultPhotoURL = "https://via.placeholder.com/150";
     if (!name || !email || !password || !confirmPassword) {
       Alert.alert("Vui lòng điền đầy đủ thông tin.");
       return;
@@ -43,14 +41,6 @@ const SignUpScreen = () => {
           name: name,
           email: email,
           password: password,
-          photoURL: defaultPhotoURL
-        });
-
-        
-
-        await updateProfile(user, {
-          displayName: name,
-          photoURL: defaultPhotoURL, // Thiết lập photoURL
         });
       }
       console.log("Đăng ký thành công");

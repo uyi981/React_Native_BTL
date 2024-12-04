@@ -1,11 +1,91 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import {db} from '../firebaseConfig';
+import { doc, updateDoc } from "firebase/firestore"; // Import các hàm cần thiết
+import * as ImagePicker from 'expo-image-picker'; // Import ImagePicker từ expo-image-picker
 
-function EditProfileScreen({ navigation }) {
-  const [username, setUsername] = useState('martini_rod');
-  const [bio, setBio] = useState('Traveler, photographer, coffee lover');
-  const [profileImage, setProfileImage] = useState('https://via.placeholder.com/150');
+function EditProfileScreen({ navigation , route}) {
+  
+  const { name, bio, photoURL, userId } = route.params; // Thêm userId để lưu dữ liệu đúng user
+
+  const [editname, setname] = useState(name);
+  const [editBio, setBio] = useState(bio);
+  const [editphotoURL, setphotoURL] = useState(photoURL);
+  console.log("Received userID:", userId);
+
+
+  
+  // Hàm chọn ảnh từ thư viện
+  const pickImage = async () => {
+    // Yêu cầu quyền truy cập thư viện ảnh
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+      alert("Permission to access gallery is required!");
+      return;
+    }
+
+    // Mở thư viện ảnh để người dùng chọn ảnh
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1], // Tỉ lệ 1:1 cho ảnh vuông
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setphotoURL(result.assets[0].uri); // Cập nhật ảnh đã chọn vào state
+    }
+  };
+
+
+
+
+//   // Hàm lưu thay đổi lên Firebase Firestore
+// const saveProfileChanges = async () => {
+//   try {
+//     // Tạo reference tới document của user
+//     const userDocRef = doc(db, 'users', userId); // Sử dụng `doc` để lấy reference
+    
+//     // Cập nhật dữ liệu
+//     await updateDoc(userDocRef, {
+//       name: editname,
+//       bio: editBio,
+//       photoURL: editphotoURL,
+//     });
+
+//     console.log('Profile updated successfully!');
+//     navigation.goBack(); // Quay lại màn hình trước khi lưu xong
+//   } catch (error) {
+//     console.error('Error updating profile: ', error);
+//   }
+// };
+
+// Hàm lưu thay đổi lên Firebase Firestore
+const saveProfileChanges = async () => {
+  try {
+    // Tạo reference tới document của user
+    const userDocRef = doc(db, 'users', userId); // Sử dụng `doc` để lấy reference
+
+    // Cập nhật dữ liệu
+    await updateDoc(userDocRef, {
+      name: editname,
+      bio: editBio,
+      photoURL: editphotoURL,
+    });
+
+    console.log('Profile updated successfully!');
+    navigation.navigate('Profile', {
+      name: editname,
+      bio: editBio,
+      photoURL: editphotoURL,
+      userId: userId,
+    }); // Chuyển dữ liệu đã cập nhật về ProfileScreen
+  } catch (error) {
+    console.error('Error updating profile: ', error);
+  }
+};
 
   return (
     <View style={styles.container}>
@@ -16,21 +96,21 @@ function EditProfileScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Edit Profile Picture */}
-      <View style={styles.profileImageContainer}>
-        <Image source={{ uri: profileImage }} style={styles.profileImage} />
-        <TouchableOpacity style={styles.changePhotoButton}>
+       {/* Edit Profile Picture */}
+       <View style={styles.photoURLContainer}>
+        <Image source={{ uri: editphotoURL }} style={styles.photoURL} />
+        <TouchableOpacity style={styles.changePhotoButton} onPress={pickImage}>
           <Text style={styles.changePhotoText}>Change Photo</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Edit Username */}
+      {/* Edit name */}
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>Username</Text>
+        <Text style={styles.label}>name</Text>
         <TextInput
           style={styles.input}
-          value={username}
-          onChangeText={setUsername}
+          value={editname}
+          onChangeText={setname}
         />
       </View>
 
@@ -39,14 +119,14 @@ function EditProfileScreen({ navigation }) {
         <Text style={styles.label}>Bio</Text>
         <TextInput
           style={[styles.input, styles.bioInput]}
-          value={bio}
+          value={editBio}
           onChangeText={setBio}
           multiline
         />
       </View>
 
       {/* Save Button */}
-      <TouchableOpacity style={styles.saveButton}>
+      <TouchableOpacity style={styles.saveButton} onPress={saveProfileChanges}>
         <Text style={styles.saveButtonText}>Save Changes</Text>
       </TouchableOpacity>
     </View>
@@ -69,11 +149,11 @@ const styles = StyleSheet.create({
     color: 'black',
     marginLeft: 15,
   },
-  profileImageContainer: {
+  photoURLContainer: {
     alignItems: 'center',
     marginBottom: 20,
   },
-  profileImage: {
+  photoURL: {
     width: 100,
     height: 100,
     borderRadius: 50,
