@@ -5,7 +5,25 @@ import { Video } from 'expo-av';
 import axios from 'axios';
 import { useVideoContext } from '../VideoProvider';
 
+function optimizeCloudinaryVideoUrl(originalUrl) {
+  const cloudinaryBaseUrl = "https://res.cloudinary.com/";
+  const transformations = "q_auto,f_mp4,vc_h264,h_720";
 
+  // Kiểm tra URL gốc có phải Cloudinary URL hợp lệ
+  if (!originalUrl.startsWith(cloudinaryBaseUrl)) {
+    throw new Error("URL không phải từ Cloudinary");
+  }
+
+  // Tách URL gốc thành các phần
+  const parts = originalUrl.split("/upload/");
+  if (parts.length !== 2) {
+    throw new Error("URL không hợp lệ. Không tìm thấy phần 'upload/' trong URL.");
+  }
+
+  // Thêm các tham số tối ưu hóa
+  const optimizedUrl = `${parts[0]}/upload/${transformations}/${parts[1]}`;
+  return optimizedUrl;
+}
 const uploadUriToCloudinary = async (uri) => {
   const cloudinaryUrl = 'https://api.cloudinary.com/v1_1/dqubbut60/video/upload';
 
@@ -32,16 +50,16 @@ const uploadUriToCloudinary = async (uri) => {
     if (!response.ok) {
       throw new Error(result.error?.message || 'Upload failed');
     }
-
+    const url = optimizeCloudinaryVideoUrl(result.secure_url);
     console.log('Upload Success:', result);
-    return result.asset_id; // URL an toàn của video
+    return {"id":result.asset_id,"url":url}; // URL an toàn của video
   } catch (error) {
     console.error('Upload Failed:', error);
     throw error;
   }
 };
 export default function AddScreen(flexVideo) {
-  const { fetchVideos } = useVideoContext();
+  const { addVideo } = useVideoContext();
   const [videoUri, setVideoUri] = useState("");
   const [permissionResponse, requestPermission] = ImagePicker.useMediaLibraryPermissions();
   const [tilte,setTilte] = useState("");
@@ -67,23 +85,29 @@ const pickVideo1 = async () => {
   }
   return null;
 };
-const handleAddData = async (id_asset) => {
+const handleAddData = async (id_asset,video_url) => {
   try {
     const response = await axios.post('https://66fc9adbc3a184a84d17768f.mockapi.io/Ha', {
       tilte: tilte,
       id_asset: id_asset,
-      author:"uyi981"
+      author:"uyi981",
+      url:video_url
     });
 
     // Kiểm tra phản hồi
     if (response.status === 201) {
       Alert.alert('Thành công', 'Dữ liệu đã được thêm!');
+     
     } else {
       Alert.alert('Thất bại', 'Không thể thêm dữ liệu!');
     }
   } catch (error) {
     console.error(error);
     Alert.alert('Lỗi', 'Đã xảy ra lỗi khi thêm dữ liệu.');
+  }
+  finally
+  {
+    addVideo({"id":id_asset,"url":video_url,"tilte": tilte});
   }
 };
 const handleUploadVideo = async () => {
@@ -94,11 +118,14 @@ const handleUploadVideo = async () => {
       console.log('Video uploaded:', videoUrl);
      // addVideo({id:videoUrl,url:videoUri});
       alert('Video uploaded successfully!');
-      fetchVideos();
-      handleAddData(videoUrl);
+      handleAddData(videoUrl.id,videoUrl.url);
+     
     } catch (error) {
       alert('Failed to upload video.');
       
+    }
+    finally
+    {   
     }
   } else {
     alert('No video selected.');
@@ -135,18 +162,6 @@ const uploadBase64ToCloudinary = async (base64String) => {
       <TouchableOpacity style={{width:"100%",marginTop:100,backgroundColor:"#4444ff",padding:10}} onPress={pickVideo1}>
       <Text style={{color:"white",fontSize:18,textAlign:'center'}}>Pick a Video</Text>
        </TouchableOpacity>
-       {videoUri && (
-        <>
-          <Video
-            source={{ uri: videoUri }}
-            resizeMode="contain"
-            style={{ width:"100%", height: 300, marginTop: 20 }}
-            shouldPlay={false}
-            isLooping
-            useNativeControls={true} // Hiển thị các điều khiển video (play, pause, v.v.)
-          />
-        </>
-      )}
        <Text style={{width:"100%",backgroundColor:"#ffffff",padding:10,textAlign:'center',fontSize:18}}>Video Titles</Text>
       <TextInput value={tilte} onChangeText={setTilte} style={{width:"100%",textAlign:'center',backgroundColor:"#ffffff",borderWidth:2,borderColor:"#4444ff",padding:5,fontSize:18}}/>
         <TouchableOpacity style={{width:"100%",backgroundColor:"#4444ff",padding:10}}onPress={handleUploadVideo}> 

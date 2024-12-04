@@ -3,28 +3,28 @@ import axios from 'axios';
 const VideoContext = createContext();
 
 export const VideoProvider = ({ children }) => {
-  const [fullVideos, setFullVideos] = useState([]);
+  const ip = '172.16.1.142';
+  const videoUrl = `http://${ip}:3000/videos`;
+  const commentUrl = `http://${ip}:3000/comments`;
+  const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const addVideo = (video) => {
-    setFullVideos((prevVideos) => [...prevVideos, video]);
-    console.log(video);
+  const addVideo = (videos) => {
+    setVideos((prevVideos) => [...prevVideos, videos]);
   };
   const fetchVideos = async () => {
     try {
-      const response = await axios.get('http://172.16.1.142:5000/videos');
-      if (response.data.success) {
-        setFullVideos(response.data.videos); // Lưu vào state videos
-      }
+      const response = await axios.get(videoInfoUrl);
+      setVideos(response.data);
     } catch (error) {
-      console.error('Error fetching videos:', error);
-    } finally {
+      console.error('Error fetching comments:', error);
+    }
+    finally{
       setLoading(false); // Đặt loading thành false khi xong
     }
   };
 
   return (
-    <VideoContext.Provider value={{ fullVideos,setFullVideos, addVideo,fetchVideos }}>
+    <VideoContext.Provider value={{videos,setVideos, addVideo,fetchVideos,videoUrl,commentUrl }}>
       {children}
     </VideoContext.Provider>
   );

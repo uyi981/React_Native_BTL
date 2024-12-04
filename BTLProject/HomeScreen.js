@@ -15,7 +15,6 @@ function CommentsModal({ visible, onClose, comments, onAddComment,videos,current
       setNewComment('');
     }
   };
-
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose} transparent={true}>
       <View style={styles.modalContainer}>
@@ -72,125 +71,76 @@ const shareVideo = async (url) => {
   };
 
 export default function HomeScreen() {
-  const [playingVideo, setPlayingVideo] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [page, setPage] = useState(1); // Trang hiện tại
-  const [limit, setLimit] = useState(10); // Số video hiển thị mỗi lần
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
-  const {fullVideos,setFullVideos} = useVideoContext();
-  const [videos, setVideos] = useState([]);
+  const {videos,setVideos,commentUrl,videoUrl} = useVideoContext();
   const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState({});
   const [comments, setComments] = useState([]); // Danh sách bình luận
-  const [videoInfo, setVideoInfo] = useState([]); // Danh sách bình luận
 
-  const commentsApiUrl = 'https://66fc9adbc3a184a84d17768f.mockapi.io/ToDo';
-  const videoInfoUrl = 'https://66fc9adbc3a184a84d17768f.mockapi.io/Ha';
-
-  const loadMoreVideos = () => {
-    const nextPage = page + 1;
-    const startIndex = (nextPage - 1) * limit; // Vị trí bắt đầu của trang mới
-    const newVideos = fullVideos.slice(startIndex, startIndex + limit); // Lấy video từ danh sách toàn bộ
-    if (newVideos.length > 0) {
-      setVideos((prevVideos) => [...prevVideos, ...newVideos]); // Gộp video mới vào danh sách hiện tại
-      setPage(nextPage);
-    } else {
-      console.log('No more videos to load');
-    }
-  };
+    
+    // Hàm gửi comment tới server
+    const addComment = async (comment,id) => {
+      if (!comment.trim() || !id) return;
   
-  const postComment = async (comment,id) => {
-    if (!comment.trim() || !id) return;
-
-    const newComment = {
-      videoId: id,
-      content: comment.trim(),
-    };
-
-    try {
-      const response = await axios.post(commentsApiUrl, newComment);
-      setComments((prev) => [...prev, response.data]); // Thêm bình luận mới vào danh sách
-    } catch (error) {
-      console.error('Error posting comment:', error);
-    }
-  };
-
-
-
-
-  function getTitle(id) {
-    const video = videoInfo.find(info => info.id_asset === id);
-    return video ? video.tilte : "haha"; // Trả về title nếu tìm thấy, hoặc null nếu không tìm thấy
-  }
-
-  useEffect(() => {
-    // Gọi API lấy danh sách video từ server của bạn
-    const fetchVideos = async () => {
+      const newComment = {
+        videoId: id,
+        content: comment.trim(),
+      };
+  
       try {
-        const response = await axios.get('http://192.168.200.172:5000/videos');
-        if (response.data.success) {
-          setFullVideos(response.data.videos); // Lưu vào state videos
-        }
+        const response = await axios.post(commentUrl, newComment);
+        setComments((prev) => [...prev, response.data]); // Thêm bình luận mới vào danh sách
       } catch (error) {
-        console.error('Error fetching videos:', error);
-      } finally {
-        setLoading(false); // Đặt loading thành false khi xong
+        console.error('Error posting comment:', error);
       }
     };
-
-    fetchVideos();
-  }, []);
+  
 // Lấy danh sách bình luận từ MockAPI
 useEffect(() => {
-  const fetchComments = async () => {
+  const fetchVideos = async () => {
     try {
-      const response = await axios.get(commentsApiUrl);
+      const response = await axios.get(commentUrl); // Thay bằng IP máy tính
       setComments(response.data);
     } catch (error) {
-      console.error('Error fetching comments:', error);
+      console.error("Error fetching comments:", error.message);
     }
   };
 
-  fetchComments();
+  fetchVideos();
 }, []);
 useEffect(() => {
-  const fetching = async () => {
+  const fetchVideos = async () => {
     try {
-      const response = await axios.get(videoInfoUrl);
-      setVideoInfo(response.data);
+      const response = await axios.get(videoUrl); // Thay bằng IP máy tính
+      setVideos(response.data);
     } catch (error) {
-      console.error('Error fetching comments:', error);
+      console.error("Error fetching videos:", error.message);
+    }
+    finally
+    {
+      setLoading(false); // Đặt loading thành false khi xong
     }
   };
 
-  fetching();
+  fetchVideos();
 }, []);
-useEffect(() => {
-  if (fullVideos.length > 0) {
-    // Hiển thị trang đầu tiên sau khi có dữ liệu
-    const initialVideos = fullVideos.slice(0, limit);
-    setVideos(initialVideos);
-  }
-}, [fullVideos]);
 
   const openCommentsModal = (index) => {
     setCurrentVideoIndex(index);
     setModalVisible(true);
   };
 
-  const addComment = (newComment) => {
-    videoData[currentVideoIndex].comments.push(newComment);
-  };
   const getIndexById = (array, id) => {
     return array.findIndex(item => item.id === id);
   };
   const renderItem = ({ item}) => (
     <View style={{ height, justifyContent: 'center', alignItems: 'center' }}>
       <Video
-       source={{ uri:`${item.url}` }} // Lấy URL từ Cloudinary
+       source={{ uri:item.url }} // Lấy URL từ Cloudinary
         style={styles.video}
         resizeMode="contain"
         isLooping
+        onError={(error) => console.error("Error loading video:", error)}
         shouldPlay={false}
         useNativeControls={true} // Hiển thị các điều khiển video (play, pause, v.v.)
     
@@ -201,7 +151,7 @@ useEffect(() => {
           <Icon name="heart" size={30} color="white" />
           <Text style={styles.iconText}></Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton} onPress={() => openCommentsModal(getIndexById(fullVideos,item.id))}>
+        <TouchableOpacity style={styles.iconButton} onPress={() => openCommentsModal(getIndexById(videos,item.id))}>
           <Icon name="comment" size={30} color="white" />
           <Text style={styles.iconText}></Text>
         </TouchableOpacity>
@@ -211,7 +161,7 @@ useEffect(() => {
       </View>
       {/* Thông tin mô tả */}
       <View style={styles.bottomDescription}>
-        <Text style={styles.descriptionText}>{getTitle(item.id)}</Text>
+        <Text style={styles.descriptionText}>{item.tilte}</Text>
         <Text style={styles.hashtag}>#tag1 #tag2</Text>
       </View>
     </View>
@@ -223,7 +173,7 @@ useEffect(() => {
   return (
     <View style={styles.container}>
       <FlatList
-        data={fullVideos}
+        data={videos}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         horizontal={false}
@@ -233,9 +183,9 @@ useEffect(() => {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         comments={comments}
-        onAddComment={postComment}
+        onAddComment={addComment}
         currentVideoIndex={currentVideoIndex}
-        videos={fullVideos}
+        videos={videos}
       />
     </View>
   );
