@@ -1,10 +1,10 @@
-import React, { useState, useRef,useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Dimensions, Modal, TextInput, TouchableOpacity } from 'react-native';
+import React, { useState, useRef,useEffect, useContext } from 'react';
+import { View, Text, StyleSheet, FlatList,Share, Dimensions, Modal, TextInput, TouchableOpacity,Alert } from 'react-native';
 import { Video } from 'expo-av';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import axios from 'axios';
 const { height } = Dimensions.get('window');
-
+import { useVideoContext } from './VideoProvider';
 // Dữ liệu video và bình luận
 function CommentsModal({ visible, onClose, comments, onAddComment,videos,currentVideoIndex }) {
   const [newComment, setNewComment] = useState('');
@@ -50,15 +50,55 @@ function CommentsModal({ visible, onClose, comments, onAddComment,videos,current
     </Modal>
   );
 }
+const shareVideo = async (url) => {
+    try {
+      const result = await Share.share({
+        message: `Check out this video: ${url}`,
+        url: url, // URL để chia sẻ (nếu thiết bị hỗ trợ)
+      });
+
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          console.log("Shared with activity type: ", result.activityType);
+        } else {
+          console.log("Shared successfully");
+        }
+      } else if (result.action === Share.dismissedAction) {
+        console.log("Share dismissed");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Unable to share video: " + error.message);
+    }
+  };
 
 export default function HomeScreen() {
+  const [playingVideo, setPlayingVideo] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [page, setPage] = useState(1); // Trang hiện tại
+  const [limit, setLimit] = useState(10); // Số video hiển thị mỗi lần
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const {fullVideos,setFullVideos} = useVideoContext();
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState({});
   const [comments, setComments] = useState([]); // Danh sách bình luận
-  const commentsApiUrl = 'https://66fc9adbc3a184a84d17768f.mockapi.io/ToDo';
+  const [videoInfo, setVideoInfo] = useState([]); // Danh sách bình luận
 
+  const commentsApiUrl = 'https://66fc9adbc3a184a84d17768f.mockapi.io/ToDo';
+  const videoInfoUrl = 'https://66fc9adbc3a184a84d17768f.mockapi.io/Ha';
+
+  const loadMoreVideos = () => {
+    const nextPage = page + 1;
+    const startIndex = (nextPage - 1) * limit; // Vị trí bắt đầu của trang mới
+    const newVideos = fullVideos.slice(startIndex, startIndex + limit); // Lấy video từ danh sách toàn bộ
+    if (newVideos.length > 0) {
+      setVideos((prevVideos) => [...prevVideos, ...newVideos]); // Gộp video mới vào danh sách hiện tại
+      setPage(nextPage);
+    } else {
+      console.log('No more videos to load');
+    }
+  };
+  
   const postComment = async (comment,id) => {
     if (!comment.trim() || !id) return;
 
@@ -78,15 +118,18 @@ export default function HomeScreen() {
 
 
 
-
+  function getTitle(id) {
+    const video = videoInfo.find(info => info.id_asset === id);
+    return video ? video.tilte : "haha"; // Trả về title nếu tìm thấy, hoặc null nếu không tìm thấy
+  }
 
   useEffect(() => {
     // Gọi API lấy danh sách video từ server của bạn
     const fetchVideos = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/videos');
+        const response = await axios.get('http://192.168.200.172:5000/videos');
         if (response.data.success) {
-          setVideos(response.data.videos); // Lưu vào state videos
+          setFullVideos(response.data.videos); // Lưu vào state videos
         }
       } catch (error) {
         console.error('Error fetching videos:', error);
@@ -110,7 +153,25 @@ useEffect(() => {
 
   fetchComments();
 }, []);
+useEffect(() => {
+  const fetching = async () => {
+    try {
+      const response = await axios.get(videoInfoUrl);
+      setVideoInfo(response.data);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    }
+  };
 
+  fetching();
+}, []);
+useEffect(() => {
+  if (fullVideos.length > 0) {
+    // Hiển thị trang đầu tiên sau khi có dữ liệu
+    const initialVideos = fullVideos.slice(0, limit);
+    setVideos(initialVideos);
+  }
+}, [fullVideos]);
 
   const openCommentsModal = (index) => {
     setCurrentVideoIndex(index);
@@ -126,30 +187,31 @@ useEffect(() => {
   const renderItem = ({ item}) => (
     <View style={{ height, justifyContent: 'center', alignItems: 'center' }}>
       <Video
-       source={{ uri: item.url }} // Lấy URL từ Cloudinary
+       source={{ uri:`${item.url}` }} // Lấy URL từ Cloudinary
         style={styles.video}
-        shouldPlay={true}
-        resizeMode="cover"
+        resizeMode="contain"
         isLooping
+        shouldPlay={false}
         useNativeControls={true} // Hiển thị các điều khiển video (play, pause, v.v.)
+    
       />
       {/* Icon trên video */}
       <View style={styles.rightIconsContainer}>
         <TouchableOpacity style={styles.iconButton}>
           <Icon name="heart" size={30} color="white" />
-          <Text style={styles.iconText}>{item.id}</Text>
+          <Text style={styles.iconText}></Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton} onPress={() => openCommentsModal(getIndexById(videos,item.id))}>
+        <TouchableOpacity style={styles.iconButton} onPress={() => openCommentsModal(getIndexById(fullVideos,item.id))}>
           <Icon name="comment" size={30} color="white" />
-          <Text style={styles.iconText}>item.comments.length</Text>
+          <Text style={styles.iconText}></Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton}>
+        <TouchableOpacity style={styles.iconButton} onPress={()=>shareVideo(item.url)}>
           <Icon name="share" size={30} color="white" />
         </TouchableOpacity>
       </View>
       {/* Thông tin mô tả */}
       <View style={styles.bottomDescription}>
-        <Text style={styles.descriptionText}>@User {item.id}</Text>
+        <Text style={styles.descriptionText}>{getTitle(item.id)}</Text>
         <Text style={styles.hashtag}>#tag1 #tag2</Text>
       </View>
     </View>
@@ -158,16 +220,13 @@ useEffect(() => {
   if (loading) {
     return <Text>Loading...</Text>;
   }
-
   return (
     <View style={styles.container}>
       <FlatList
-        data={videos}
+        data={fullVideos}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        pagingEnabled
         horizontal={false}
-        showsVerticalScrollIndicator={false}
       />
       {/* Modal bình luận */}
       <CommentsModal
@@ -176,7 +235,7 @@ useEffect(() => {
         comments={comments}
         onAddComment={postComment}
         currentVideoIndex={currentVideoIndex}
-        videos={videos}
+        videos={fullVideos}
       />
     </View>
   );
@@ -189,12 +248,12 @@ const styles = StyleSheet.create({
   },
   video: {
     width: '100%',
-    height: '100%',
+    height: '80%',
   },
   rightIconsContainer: {
     position: 'absolute',
     right: 20,
-    top: '30%',
+    top: '45%',
     alignItems: 'center',
   },
   iconButton: {

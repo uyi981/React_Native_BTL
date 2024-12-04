@@ -11,7 +11,7 @@ import ProfileScreen from './screen/ProfileScreen';
 import EditProfileScreen from './screen/EditProfileScreen';
 import LoginScreen from './screen/LoginScreen';
 import SignUpScreen from './screen/SignUpScreen';
-
+import { VideoProvider } from './VideoProvider';
 // Discover Screen
 function DiscoverScreen() {
   return (
@@ -51,6 +51,7 @@ const Tab = createBottomTabNavigator();
 
 export default function Navigation() {
   return (
+    <VideoProvider>
     <NavigationContainer>
       <Tab.Navigator
         screenOptions={{
@@ -65,15 +66,6 @@ export default function Navigation() {
           options={{
             tabBarIcon: ({ color, size }) => (
               <Icon name="home" color={color} size={size} />
-            ),
-          }}
-        />
-        <Tab.Screen
-          name="Discover"
-          component={DiscoverScreen}
-          options={{
-            tabBarIcon: ({ color, size }) => (
-              <Icon name="search" color={color} size={size} />
             ),
           }}
         />
@@ -108,6 +100,7 @@ export default function Navigation() {
         />
       </Tab.Navigator>
     </NavigationContainer>
+    </VideoProvider>
   );
 }
 
