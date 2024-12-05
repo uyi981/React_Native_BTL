@@ -1,103 +1,84 @@
-const express = require('express');
-const helmet = require('helmet');
-const axios = require('axios');
-const cors = require('cors');
-const multer = require('multer'); // Cài đặt multer để xử lý upload file
-const cloudinary = require('cloudinary').v2; // Cài đặt Cloudinary SDK
-require('dotenv').config(); // Để sử dụng biến môi trường từ file .env
-
+const express = require("express");
+const fs = require("fs");
 const app = express();
-const PORT = process.env.PORT || 5000;
+const port = 3000;
+const cors = require("cors");
+// Middleware để xử lý JSON
+app.use(express.json());
+const corsOptions = {
+  origin: "*", // Cho phép tất cả các nguồn (React Native, trình duyệt, v.v.)
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // Các phương thức được phép
+  allowedHeaders: ["Content-Type", "Authorization"], // Các header được phép
+};
 
-// Cấu hình Multer để lưu video vào thư mục uploads tạm thời
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Thư mục tạm để lưu video
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname); // Tạo tên file duy nhất
-  },
+app.use(cors(corsOptions));
+// Đọc dữ liệu từ file JSON
+const getData = () => {
+  const rawData = fs.readFileSync("data.json");
+  return JSON.parse(rawData);
+};
+// Ghi dữ liệu vào file JSON
+const saveData = (data) => {
+  fs.writeFileSync("data.json", JSON.stringify(data, null, 2));
+};
+
+// Endpoint: Thêm video mới
+app.post("/videos", (req, res) => {
+  const newVideo = req.body;
+  const data = getData();
+
+  // Tạo ID mới cho video (dựa trên số lượng video hiện tại)
+  const newId = data.videos.length > 0 ? Math.max(data.videos.map(v => v.id)) + 1 : 1;
+  newVideo.id = newId;
+
+  // Thêm video mới vào danh sách
+  data.videos.push(newVideo);
+
+  // Lưu lại dữ liệu vào file
+  saveData(data);
+
+  res.status(201).json(newVideo);  // Trả về video mới vừa thêm
 });
 
-const upload = multer({ storage: storage });
+// Endpoint: Thêm video mới
+app.post("/comments", (req, res) => {
+  const newComments = req.body;
+  const data = getData();
 
-// Middleware: Cấu hình Content Security Policy (CSP) và CORS
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        imgSrc: ["'self'", "data:"], // Cho phép hình ảnh base64
-        mediaSrc: ["'self'", "https://res.cloudinary.com"], // Cho phép video từ Cloudinary
-      },
-    },
-  })
-);
+  // Tạo ID mới cho comments (dựa trên số lượng video hiện tại)
+  const newId = data.comments.length > 0 ? Math.max(data.comments.map(v => v.id)) + 1 : 1;
+  newComments.id = newId;
 
-// Sử dụng CORS để cho phép các yêu cầu từ các nguồn khác
-app.use(cors());
+  // Thêm comments mới vào danh sách
+  data.comments.push(newComments);
 
-// Cấu hình Cloudinary
-cloudinary.config({
-  cloud_name: 'dqubbut60',  // Thay bằng cloud name của bạn
-  api_key: '289353125148622',  // Thay bằng API key của bạn
-  api_secret: 'lLT9qr0VpyY64PYq23U_c1Ehd-M',  // Thay bằng API secret của bạn
+  // Lưu lại dữ liệu vào file
+  saveData(data);
+
+  res.status(201).json(newComments);  // Trả về video mới vừa thêm
 });
 
-// Endpoint để upload video lên Cloudinary
-app.post('/upload', upload.single('video'), async (req, res) => {
-  // Kiểm tra xem file có được gửi lên không
-  if (!req.file) {
-    return res.status(400).json({ success: false, message: 'No video file uploaded' });
-  }
-
-  try {
-    // Upload video lên Cloudinary
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      resource_type: 'video',  // Đảm bảo là video
-      public_id: `video_${Date.now()}`,  // Tạo ID công khai cho video
-    });
-
-    // Trả về URL của video vừa upload lên Cloudinary
-    res.json({
-      success: true,
-      message: 'Video uploaded successfully',
-      video_url: result.secure_url,  // URL của video trên Cloudinary
-    });
-
-  } catch (error) {
-    console.error('Error uploading video:', error);
-    res.status(500).json({ success: false, message: 'Failed to upload video to Cloudinary' });
-  }
+// Endpoint: Lấy toàn bộ danh sách videos
+app.get("/videos", (req, res) => {
+  const data = getData();
+  res.json(data.videos);
 });
-
-// Endpoint: Trả về danh sách video từ Cloudinary
-app.get('/videos', async (req, res) => {
-  try {
-    const response = await axios.get(
-      `https://api.cloudinary.com/v1_1/dqubbut60/resources/video`,
-      {
-        auth: {
-          username: '289353125148622',  // API Key
-          password: 'lLT9qr0VpyY64PYq23U_c1Ehd-M',  // API Secret
-        },
-      }
-    );
-
-    const videos = response.data.resources.map((video) => ({
-      id: video.asset_id,
-      url: video.secure_url,
-      publicId: video.public_id,
-    }));
-
-    res.json({ success: true, videos });
-  } catch (error) {
-    console.error('Error fetching videos:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch videos.' });
+app.get("/comments", (req, res) => {
+  const data = getData();
+  res.json(data.comments);
+});
+// Endpoint: Lấy video theo ID
+app.get("/videos/:id", (req, res) => {
+  const data = getData();
+  const video = data.videos.find(v => v.id === parseInt(req.params.id));
+  if (video) {
+    res.json(video);
+  } else {
+    res.status(404).send({ error: "Video not found" });
   }
 });
 
-// Lắng nghe cổng
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+// Start server
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
 });

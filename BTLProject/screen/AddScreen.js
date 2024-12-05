@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useRef,useEffect  } from 'react';
 import { Button, View, Text,TouchableOpacity,TextInput,Alert} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Video } from 'expo-av';
@@ -59,6 +59,9 @@ const uploadUriToCloudinary = async (uri) => {
   }
 };
 export default function AddScreen(flexVideo) {
+  const [hasPermission, setHasPermission] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const cameraRef = useRef(null);
   const { addVideo,videoUrl } = useVideoContext();
   const [videoUri, setVideoUri] = useState("");
   const [permissionResponse, requestPermission] = ImagePicker.useMediaLibraryPermissions();
@@ -70,6 +73,12 @@ export default function AddScreen(flexVideo) {
       requestPermission();
     }
   }, [permissionResponse]);
+  useEffect(() => {
+    (async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === 'granted');
+    })();
+  }, []);
 const pickVideo1 = async () => {
   setId("lô");
   const result = await ImagePicker.launchImageLibraryAsync({
@@ -156,15 +165,16 @@ const uploadBase64ToCloudinary = async (base64String) => {
     throw error;
   }
 };
+
   return (
     <View style={{ flex: 1, justifyContent: 'flex-start' }}>
        <View style={{ flex: 1, justifyContent: 'flex-start',gap:5 }}>
-      <TouchableOpacity style={{width:"100%",marginTop:100,backgroundColor:"#4444ff",padding:10}} onPress={pickVideo1}>
+      <TouchableOpacity style={{width:"100%",marginTop:100,backgroundColor:"red",padding:10}} onPress={pickVideo1}>
       <Text style={{color:"white",fontSize:18,textAlign:'center'}}>Pick a Video</Text>
        </TouchableOpacity>
        <Text style={{width:"100%",backgroundColor:"#ffffff",padding:10,textAlign:'center',fontSize:18}}>Video Titles</Text>
       <TextInput value={tilte} onChangeText={setTilte} style={{width:"100%",textAlign:'center',backgroundColor:"#ffffff",borderWidth:2,borderColor:"#4444ff",padding:5,fontSize:18}}/>
-        <TouchableOpacity style={{width:"100%",backgroundColor:"#4444ff",padding:10}}onPress={handleUploadVideo}> 
+        <TouchableOpacity style={{width:"100%",backgroundColor:"red",padding:10}}onPress={handleUploadVideo}> 
       <Text style={{color:"white",fontSize:18,textAlign:'center'}}>Upload Video</Text>
        </TouchableOpacity>
     </View>
