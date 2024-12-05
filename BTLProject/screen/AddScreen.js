@@ -59,7 +59,7 @@ const uploadUriToCloudinary = async (uri) => {
   }
 };
 export default function AddScreen(flexVideo) {
-  const { addVideo } = useVideoContext();
+  const { addVideo,videoUrl } = useVideoContext();
   const [videoUri, setVideoUri] = useState("");
   const [permissionResponse, requestPermission] = ImagePicker.useMediaLibraryPermissions();
   const [tilte,setTilte] = useState("");
@@ -87,7 +87,7 @@ const pickVideo1 = async () => {
 };
 const handleAddData = async (id_asset,video_url) => {
   try {
-    const response = await axios.post('https://66fc9adbc3a184a84d17768f.mockapi.io/Ha', {
+    const response = await axios.post(videoUrl, {
       tilte: tilte,
       id_asset: id_asset,
       author:"uyi981",

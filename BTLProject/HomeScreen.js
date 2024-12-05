@@ -1,5 +1,5 @@
 import React, { useState, useRef,useEffect, useContext } from 'react';
-import { View, Text, StyleSheet, FlatList,Share, Dimensions, Modal, TextInput, TouchableOpacity,Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList,Share, Dimensions, Modal, TextInput, TouchableOpacity,Alert,Image } from 'react-native';
 import { Video } from 'expo-av';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import axios from 'axios';
@@ -8,7 +8,6 @@ import { useVideoContext } from './VideoProvider';
 // Dữ liệu video và bình luận
 function CommentsModal({ visible, onClose, comments, onAddComment,videos,currentVideoIndex }) {
   const [newComment, setNewComment] = useState('');
-
   const handleAddComment = () => {
     if (newComment.trim() !== '') {
       onAddComment(newComment.trim(),videos[currentVideoIndex].id);
@@ -29,7 +28,12 @@ function CommentsModal({ visible, onClose, comments, onAddComment,videos,current
           keyExtractor={(item, index) => index.toString()}
           renderItem={({ item }) => (
             <View style={styles.commentContainer}>
+              <View style={{flexDirection:'row'}}>
+              <Text style={styles.commentText}>{item.author}</Text> 
+              <Text  style={styles.commentText}>: </Text>
               <Text style={styles.commentText}>{item.content}</Text>
+                </View>
+         
             </View>
           )}
         />
@@ -73,7 +77,7 @@ const shareVideo = async (url) => {
 export default function HomeScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
-  const {videos,setVideos,commentUrl,videoUrl} = useVideoContext();
+  const {videos,setVideos,commentUrl,name,videoUrl} = useVideoContext();
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState([]); // Danh sách bình luận
 
@@ -81,10 +85,11 @@ export default function HomeScreen() {
     // Hàm gửi comment tới server
     const addComment = async (comment,id) => {
       if (!comment.trim() || !id) return;
-  
+      const nameReal = name||"ẩn danh";
       const newComment = {
         videoId: id,
         content: comment.trim(),
+        author:nameReal
       };
   
       try {
@@ -228,6 +233,12 @@ const styles = StyleSheet.create({
   hashtag: {
     color: 'white',
     fontSize: 12,
+  },
+  photoURL: {
+    width: 30,
+    height: 30,
+    borderRadius: 50,
+    marginRight: 20,
   },
   modalContainer: {
     flex: 1,

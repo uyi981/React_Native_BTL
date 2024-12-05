@@ -4,10 +4,13 @@ import React , { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import {db} from '../firebaseConfig';
 import {signOut, getAuth} from 'firebase/auth';
+import { useVideoContext } from '../VideoProvider';
 
 
 function ProfileScreen({ navigation, route }) {
   const { name, bio, photoURL , userId} = route.params; // Lấy thông tin từ route.params
+  const {setName} = useVideoContext();
+  setName(name);
   console.log("Received userID:", userId);
   // const userProfile = {
 

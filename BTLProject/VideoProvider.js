@@ -8,6 +8,7 @@ export const VideoProvider = ({ children }) => {
   const commentUrl = `http://${ip}:3000/comments`;
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [name,setName] = useState("");
   const addVideo = (videos) => {
     setVideos((prevVideos) => [...prevVideos, videos]);
   };
@@ -24,7 +25,7 @@ export const VideoProvider = ({ children }) => {
   };
 
   return (
-    <VideoContext.Provider value={{videos,setVideos, addVideo,fetchVideos,videoUrl,commentUrl }}>
+    <VideoContext.Provider value={{videos,setVideos, addVideo,fetchVideos,videoUrl,commentUrl,setName,name}}>
       {children}
     </VideoContext.Provider>
   );

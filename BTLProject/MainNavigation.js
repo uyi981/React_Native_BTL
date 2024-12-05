@@ -89,15 +89,6 @@ export default function Navigation() {
             ),
           }}
         />
-        <Tab.Screen
-          name="Me"
-          component={MeScreen}
-          options={{
-            tabBarIcon: ({ color, size }) => (
-              <Icon name="user" color={color} size={size} />
-            ),
-          }}
-        />
       </Tab.Navigator>
     </NavigationContainer>
     </VideoProvider>
